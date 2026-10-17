@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowUpRight, Car, Compass, Footprints, LocateFixed, MapPin, Navigation, Play, Route as RouteIcon } from 'lucide-react'
 import { css } from '../../styled-system/css'
 import data from '../data.json'
@@ -128,7 +128,7 @@ function VideoCard({ video, origin, mode, index }: { video: NearbyVideo; origin:
   return <article className="video-card">
     <a className="poster" href={video.url} target="_blank" rel="noreferrer" aria-label={`${video.title}をニコニコ動画で見る`}>
       <MapPin size={58} strokeWidth={1} aria-hidden="true" />
-      {video.thumbnail && <img src={video.thumbnail} alt="" loading="lazy" referrerPolicy="no-referrer" onError={event => { event.currentTarget.style.display = 'none' }} />}
+      {video.thumbnail && <Thumbnail key={video.thumbnail} url={video.thumbnail} />}
       <span className="play-icon"><Play size={19} fill="currentColor" aria-hidden="true" /></span>
       <span className="poster-label">ニコニコ動画</span>
     </a>
@@ -145,6 +145,14 @@ function VideoCard({ video, origin, mode, index }: { video: NearbyVideo; origin:
       </details>}
     </div>
   </article>
+}
+
+function Thumbnail({ url }: { url: string }) {
+  const image = useRef<HTMLImageElement>(null)
+  const [loaded, setLoaded] = useState(false)
+  useEffect(() => { setLoaded(Boolean(image.current?.naturalWidth)) }, [])
+  return <img ref={image} src={url} alt="" loading="lazy" referrerPolicy="no-referrer"
+    style={{ visibility: loaded ? 'visible' : 'hidden' }} onLoad={() => setLoaded(true)} />
 }
 
 function formatDistance(km: number) {
