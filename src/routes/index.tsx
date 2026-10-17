@@ -1,10 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowUpRight, Car, Compass, Footprints, LocateFixed, Map, MapPin, Navigation, Play, Route as RouteIcon } from 'lucide-react'
+import { ArrowUpRight, Car, Compass, Footprints, LocateFixed, Map, MapPin, Play, Route as RouteIcon } from 'lucide-react'
 import { NearbyMap } from '../components/NearbyMap'
+import { VideoFeed } from '../components/VideoFeed'
+import type { VideoFeedHandle } from '../components/VideoFeed'
 import data from '../data.json'
-import { directionsUrl, findNearbyVideos } from '../nearby'
-import type { Coordinates, NearbyPlace, NearbyVideo } from '../nearby'
+import { findNearbyVideos } from '../nearby'
+import type { Coordinates, NearbyPlace } from '../nearby'
 
 type Origin = Coordinates & { label: string; demo: boolean }
 type TravelMode = 'walking' | 'driving'
@@ -19,15 +21,14 @@ function Home() {
   const [notice, setNotice] = useState('')
   const [selectedPlace, setSelectedPlace] = useState<NearbyPlace | null>(null)
   const request = useRef(0)
+  const feed = useRef<VideoFeedHandle>(null)
   const radius = mode === 'walking' ? 1 : 10
   const videos = useMemo(() => findNearbyVideos(origin, radius), [origin, radius])
   const placeCount = videos.reduce((count, video) => count + video.places.length, 0)
 
   // ピンとカードの移動を、ページ内のスクロールでつなぐ。
   const chooseVideo = useCallback((id: string) => {
-    const card = document.getElementById(`video-${id}`)
-    card?.focus({ preventScroll: true })
-    card?.scrollIntoView({ block: 'start' })
+    feed.current?.scrollToVideo(id)
   }, [])
 
   function showPlace(place: NearbyPlace) {
@@ -83,7 +84,7 @@ function Home() {
     return () => { request.current++ }
   }, [locate])
 
-  // 地図と全件の動画一覧を、同じページに続けて表示する。
+  // 地図と段階的に読み込む動画一覧を、同じページに続けて表示する。
   return <>
     <aside className="desktop-brand" aria-hidden="true">
       <RouteIcon size={64} strokeWidth={1.5} />
@@ -125,9 +126,7 @@ function Home() {
               <div><h2 id="results-title">近くで出会える動画</h2><p>近い順・直線距離</p></div>
               <span className="result-count"><strong>{videos.length}</strong> 本</span>
             </div>
-            <div className="video-feed">
-              {videos.map((video, index) => <VideoCard key={video.id} video={video} origin={origin} mode={mode} index={index} onShowPlace={showPlace} />)}
-            </div>
+            <VideoFeed key={`${origin.latitude},${origin.longitude},${radius}`} ref={feed} videos={videos} origin={origin} mode={mode} onShowPlace={showPlace} />
             {videos.length === 0 && <div className="empty">
               <Compass size={34} strokeWidth={1.4} />
               <h3>この範囲には、まだ動画がありません</h3>
@@ -150,44 +149,6 @@ function Home() {
       <button aria-pressed={mode === 'driving'} onClick={() => chooseMode('driving')}><Car size={19} />車<span>10 km</span></button>
     </div>
   </>
-}
-
-function VideoCard({ video, origin, mode, index, onShowPlace }: { video: NearbyVideo; origin: Coordinates; mode: TravelMode; index: number; onShowPlace: (place: NearbyPlace) => void }) {
-  const nearest = video.places[0]
-  return <article id={`video-${video.id}`} className="video-card" tabIndex={-1} aria-labelledby={`title-${video.id}`}>
-    <a className="poster" href={video.url} target="_blank" rel="noreferrer" aria-label={`${video.title}をニコニコ動画で見る`}>
-      <div className="poster-fallback"><MapPin size={46} strokeWidth={1.5} aria-hidden="true" /><span>この動画の景色を見に行こう</span></div>
-      {video.thumbnail && <Thumbnail key={video.thumbnail} url={video.thumbnail} />}
-      <span className="play-icon"><Play size={19} fill="currentColor" aria-hidden="true" /></span>
-      <span className="poster-label">{nearest.name} · {formatDistance(nearest.distance)}</span>
-      <span className="poster-number">{String(index + 1).padStart(2, '0')}</span>
-    </a>
-    <div className="card-content">
-      <div className="card-meta"><p className="card-place"><MapPin size={14} /><span>{nearest.name}</span></p><span className="distance">{formatDistance(nearest.distance)}</span></div>
-      <h3 id={`title-${video.id}`}>{video.title}</h3>
-      <p className="author">{video.author}</p>
-      <div className="card-actions">
-        <a className="video-link" href={video.url} target="_blank" rel="noreferrer"><Play size={13} />動画を見る<ArrowUpRight size={13} /></a>
-        <button className="map-link" onClick={() => onShowPlace(nearest)}><Map size={15} />地図で見る</button>
-        <a className="directions-link" href={directionsUrl(origin, nearest, mode)} target="_blank" rel="noreferrer"><Navigation size={14} />掲載地点への経路<ArrowUpRight size={13} /></a>
-      </div>
-      {video.places.length > 1 && <details className="other-places"><summary>この範囲に、ほか {video.places.length - 1} 地点</summary>
-        {video.places.slice(1).map((place, index) => <div className="place-row" key={place.id}><span>{place.name}<small>地点 {index + 2} · {formatDistance(place.distance)}</small></span><div><button onClick={() => onShowPlace(place)} aria-label={`地点 ${index + 2} を地図で見る`}>地図</button><a href={directionsUrl(origin, place, mode)} target="_blank" rel="noreferrer" aria-label={`地点 ${index + 2} への経路を見る`}>経路 ↗</a></div></div>)}
-      </details>}
-    </div>
-  </article>
-}
-
-function Thumbnail({ url }: { url: string }) {
-  const image = useRef<HTMLImageElement>(null)
-  const [loaded, setLoaded] = useState(false)
-  useEffect(() => { setLoaded(Boolean(image.current?.naturalWidth)) }, [])
-  return <img ref={image} src={url} alt="" loading="lazy" referrerPolicy="no-referrer"
-    style={{ visibility: loaded ? 'visible' : 'hidden' }} onLoad={() => setLoaded(true)} />
-}
-
-function formatDistance(km: number) {
-  return km < 1 ? `約 ${Math.round(km * 100) * 10} m` : `約 ${km.toFixed(1)} km`
 }
 
 const demoLocations: Origin[] = [
