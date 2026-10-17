@@ -8,6 +8,7 @@ import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from place_names import load_place_names
 
 SOURCE = 'https://www.google.com/maps/d/viewer?mid=13Xyxidjdp-PCcwAl2zI76WBqUSOKkX95'
 EXPORT = 'https://www.google.com/maps/d/kml?mid=13Xyxidjdp-PCcwAl2zI76WBqUSOKkX95&forcekml=1'
@@ -18,6 +19,7 @@ def main():
     # KML を取得し、関東周辺の点と動画 URL がある登録だけを採用する。
     with urllib.request.urlopen(EXPORT) as response:
         root = ET.fromstring(response.read())
+    names = load_place_names()
     videos, places = {}, []
     for marker in root.findall('.//k:Placemark', NS):
         coordinates = marker.find('.//k:Point/k:coordinates', NS)
@@ -41,7 +43,8 @@ def main():
         }
         places.append({
             'id': f'{video_id}-{longitude}-{latitude}', 'videoId': video_id,
-            'name': 'マップ掲載地点', 'latitude': latitude, 'longitude': longitude,
+            'name': names.get((video_id, round(latitude, 7), round(longitude, 7)), 'マップ掲載地点'),
+            'latitude': latitude, 'longitude': longitude,
         })
 
     # ニコニコの公開 API からサムネイルを取得し、動画へ紐づける。

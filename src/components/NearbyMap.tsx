@@ -130,7 +130,7 @@ function popupContent(pin: Pin, onChooseVideo: Props['onChooseVideo']) {
   content.className = 'map-popup'
   const label = document.createElement('p')
   label.className = 'map-popup-label'
-  label.textContent = 'この掲載地点の動画'
+  label.textContent = [...new Set(pin.places.map(place => place.name))].join(' / ')
   content.append(label)
   for (const video of pin.videos) {
     const button = document.createElement('button')

@@ -8,7 +8,7 @@
 .map-frame .leaflet-popup-content { margin: 16px; width: 240px !important; max-width: calc(100vw - 100px); }
 .map-frame .leaflet-popup-content-wrapper { border-radius: 16px; }
 .map-frame .leaflet-popup-close-button { width: 28px; height: 28px; color: #143c78; }
-.map-frame .map-popup-label { margin: 0 0 10px; font-size: 10px; font-weight: 700; color: #527297; }
+.map-frame .map-popup-label { margin: 0 0 10px; font-size: 13px; line-height: 1.6; font-weight: 800; color: #143c78; overflow-wrap: anywhere; }
 .map-popup-video { display: block; width: 100%; padding: 10px; border: 0; border-radius: 10px; background: #eaf6ff; color: #143c78; font: inherit; font-size: 12px; font-weight: 700; text-align: left; line-height: 1.6; overflow-wrap: anywhere; cursor: pointer; }
 .map-popup-video + .map-popup-video { margin-top: 8px; }
 .map-popup-video span { display: block; margin-top: 8px; font-size: 10px; color: #0866d9; }

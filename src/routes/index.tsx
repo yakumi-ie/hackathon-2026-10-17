@@ -153,6 +153,7 @@ function Home() {
           <aside className="about">
             <p>地図をたどって旅に出よう。データの出典：<a href={data.source} target="_blank" rel="noreferrer">ニコニコ「動画旅マップ」<ArrowUpRight size={11} /></a></p>
             <p>関東周辺の {data.videos.length} 本・{data.places.length} 地点を収録（{data.importedAt} 取得）。<br />掲載地点は元マップの座標です。営業状況・立ち入り可否は訪問前にご確認ください。</p>
+            <p>地点名の補足：Google マップ</p>
           </aside>
         </div>
       </main>
@@ -180,13 +181,14 @@ function VideoCard({ video, origin, mode, index, onShowPlace }: { video: NearbyV
       <div className="card-meta"><span className="video-number">YORIMICHI / {String(index + 1).padStart(2, '0')}</span><span className="distance"><MapPin size={12} />{formatDistance(nearest.distance)}</span></div>
       <h3 id={`title-${video.id}`}>{video.title}</h3>
       <p className="author">{video.author}</p>
+      <p className="card-place"><MapPin size={14} /><span>{nearest.name}</span></p>
       <div className="card-actions">
         <a className="video-link" href={video.url} target="_blank" rel="noreferrer"><Play size={13} />動画を見る<ArrowUpRight size={13} /></a>
         <button className="map-link" onClick={() => onShowPlace(nearest)}><Map size={15} />地図で見る</button>
         <a className="directions-link" href={directionsUrl(origin, nearest, mode)} target="_blank" rel="noreferrer"><Navigation size={14} />掲載地点への経路<ArrowUpRight size={13} /></a>
       </div>
       {video.places.length > 1 && <details className="other-places"><summary>この範囲に、ほか {video.places.length - 1} 地点</summary>
-        {video.places.slice(1).map((place, index) => <div className="place-row" key={place.id}><span>地点 {index + 2} · {formatDistance(place.distance)}</span><div><button onClick={() => onShowPlace(place)} aria-label={`地点 ${index + 2} を地図で見る`}>地図</button><a href={directionsUrl(origin, place, mode)} target="_blank" rel="noreferrer" aria-label={`地点 ${index + 2} への経路を見る`}>経路 ↗</a></div></div>)}
+        {video.places.slice(1).map((place, index) => <div className="place-row" key={place.id}><span>{place.name}<small>地点 {index + 2} · {formatDistance(place.distance)}</small></span><div><button onClick={() => onShowPlace(place)} aria-label={`地点 ${index + 2} を地図で見る`}>地図</button><a href={directionsUrl(origin, place, mode)} target="_blank" rel="noreferrer" aria-label={`地点 ${index + 2} への経路を見る`}>経路 ↗</a></div></div>)}
       </details>}
     </div>
   </article>
