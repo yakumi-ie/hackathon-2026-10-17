@@ -1,0 +1,8 @@
+node_modules/
+styled-system/
+dist/
+.tanstack/
+.output/
+.env*
+!.env.example
+artifacts/

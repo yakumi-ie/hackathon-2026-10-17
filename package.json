@@ -1,0 +1,32 @@
+{
+  "name": "2026-10-hackathon",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare": "panda codegen",
+    "dev": "vite --host 0.0.0.0 --port 3000",
+    "build": "panda codegen && vite build",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview --host 0.0.0.0 --port 3000",
+    "deps": "node scripts/install.mjs"
+  },
+  "dependencies": {
+    "@tanstack/react-router": "1.170.41",
+    "@tanstack/react-start": "1.168.60",
+    "lucide-react": "^0.545.0",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "@pandacss/dev": "2.2.0",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "6.0.3",
+    "typescript": "6.0.3",
+    "vite": "8.1.0"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}
