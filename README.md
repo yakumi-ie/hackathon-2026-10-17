@@ -14,6 +14,16 @@ npm run dev
 ```
 
 http://localhost:3000/ を開く。
+Docker Sandbox 内で起動した場合、ホストのブラウザから開くにはポート転送が必要。
+Mac 側のターミナルで次を実行する（今回のサンドボックス名は `dw-hackathon`）。
+
+```sh
+sbx ports dw-hackathon --publish 3000:3000
+```
+
+転送後は http://127.0.0.1:3000/ を開く。
+ポート転送の設定は [sbx ports の公式ドキュメント](https://docs.docker.com/reference/cli/sbx/ports/) を参照。
+
 初期表示は上野駅のデモ地点で、位置情報を許可しなくても試せる。
 徒歩は半径 1 km、車は半径 10 km の直線距離で検索する。
 上野・浅草・東京・横浜・鎌倉のデモ地点を選べる。
