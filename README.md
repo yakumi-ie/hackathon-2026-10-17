@@ -84,6 +84,30 @@ npm run preview
 
 TanStack Start のプリレンダリングで生成した `dist/client` を静的配信できる。
 ランタイムの API サーバーやデータベースは不要。
+`dist/server` も生成されるが、プリレンダリングで使うビルド出力であり、静的配信時にはアップロードしない。
+
+### Cloudflare Drop
+
+[Cloudflare Drop](https://developers.cloudflare.com/changelog/post/2026-07-08-cloudflare-drag-and-drop/) へは `dist/client` フォルダーをアップロードする。
+ZIP を使う場合も、ルートに `index.html` と `assets/` がある構成にする。
+ブラウザで位置情報取得と近隣検索を行い、背景地図とサムネイルはそれぞれ OpenStreetMap とニコニコから取得する。
+Workers のサーバースクリプトや Node.js の実行環境は不要。
+
+### GitHub Release
+
+`v*` のタグを push すると、GitHub Actions が型チェックとビルドを行い、`dist/client` のみをまとめた `yorimichi-drop.zip` を Release に添付する。
+Release の ZIP をダウンロードして、そのまま Cloudflare Drop にアップロードできる。
+`dist/server` や `node_modules` は ZIP に含めない。
+
+```sh
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+依存パッケージは lockfile の確定済みバージョンをインストールする。
+同じタグのワークフローを再実行した場合は、既存 Release の ZIP を更新する。
+
+### コンテナ
 
 Alpine Linux のコンテナ用に Dockerfile と nginx の設定を用意している。
 SSL 終端はインフラ側で行う。
