@@ -79,7 +79,8 @@ marp docs/presentation.md --pdf --allow-local-files -o docs/presentation.pdf
 動画と掲載座標の出典は [ニコニコ「動画旅マップ」](https://www.google.com/maps/d/viewer?mid=13Xyxidjdp-PCcwAl2zI76WBqUSOKkX95)。
 背景地図は © OpenStreetMap contributors、サムネイルはニコニコ動画。
 地点名の補足は Google マップ。
-画像にはアプリ内の出典表示・地図の attribution を残している。
+地図の画像には OpenStreetMap の attribution を残している。
+動画・地点の出典はこの資料にも記載している。
 
 349 本・882 地点は、関東周辺の抽出範囲に含まれる現時点の収録数。
 関東全域の網羅、徒歩 / 車での所要時間、実機での測位を保証する説明は含めない。

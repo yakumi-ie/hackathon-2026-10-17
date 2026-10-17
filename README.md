@@ -97,6 +97,7 @@ docker run --rm -p 8080:8080 yorimichi
 コンテナのビルドには確定済みの lockfile を使う。
 
 実装計画は [PLAN.md](PLAN.md) を参照。
+発表資料は [Marp スライド](docs/presentation.md)、時間配分とデモ手順は [発表ガイド](docs/README.md) を参照。
 
 ## 確認済みの動作
 
