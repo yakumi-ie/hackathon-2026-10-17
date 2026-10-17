@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { LocateFixed } from 'lucide-react'
+import { LocateFixed, Maximize2, Minimize2 } from 'lucide-react'
 import type { LatLngBounds, Map as LeafletMap, Marker, MarkerClusterGroup } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import 'leaflet.markercluster/dist/MarkerCluster.css'
@@ -20,6 +20,7 @@ export function NearbyMap({ origin, radius, videos, selectedPlace, onChooseVideo
   const view = useRef<MapView | null>(null)
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading')
   const [tileError, setTileError] = useState(false)
+  const [expanded, setExpanded] = useState(false)
 
   // SSR では地図を初期化せず、検索結果が変わったときに描き直す。
   useEffect(() => {
@@ -40,6 +41,7 @@ export function NearbyMap({ origin, radius, videos, selectedPlace, onChooseVideo
         zoomAnimation: false,
         fadeAnimation: !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
       }).fitBounds(bounds, { padding: [18, 18] })
+      map.on('popupopen', () => setExpanded(true))
       L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -86,10 +88,16 @@ export function NearbyMap({ origin, radius, videos, selectedPlace, onChooseVideo
     }
   }, [origin, radius, videos, onChooseVideo])
 
+  // 表示サイズを変えても、地図とピンの位置を保つ。
+  useEffect(() => {
+    view.current?.map.invalidateSize({ animate: false })
+  }, [expanded, status])
+
   // カードが指定した地点へ寄り、その地点の動画を表示する。
   useEffect(() => {
     const current = view.current
     if (!current || !selectedPlace) return
+    setExpanded(true)
     current.map.setView([selectedPlace.latitude, selectedPlace.longitude], Math.max(current.map.getZoom(), 15), { animate: false })
     const marker = current.markers.get(selectedPlace.id)
     if (marker) current.clusters.zoomToShowLayer(marker, () => marker.openPopup())
@@ -103,12 +111,18 @@ export function NearbyMap({ origin, radius, videos, selectedPlace, onChooseVideo
     current.map.fitBounds(current.bounds, { padding: [18, 18], animate: false })
   }
 
-  return <div className="map-frame">
-    <div ref={container} className="nearby-map" role="region" aria-label="検索範囲内の動画掲載地点" />
-    {status === 'ready' && <button className="map-reset" onClick={resetView}><LocateFixed size={15} />範囲に戻す</button>}
-    {status !== 'ready' && <p className="map-status" role="status">{status === 'loading' ? '地図を読み込んでいます…' : '地図を読み込めませんでした。下の動画一覧をご利用ください。'}</p>}
-    {tileError && <p className="map-status" role="status">背景地図を取得できません。動画一覧と経路リンクは引き続き使えます。</p>}
-  </div>
+  return <>
+    <div className="map-frame" data-expanded={expanded}>
+      <div id="nearby-map" ref={container} className="nearby-map" role="region" aria-label="検索範囲内の動画掲載地点" />
+      <button className="map-expand" aria-expanded={expanded} aria-controls="nearby-map" onClick={() => setExpanded(value => !value)}>
+        {expanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}{expanded ? '小さく戻す' : '大きく見る'}
+      </button>
+      {status === 'ready' && <button className="map-reset" aria-label="検索範囲に戻す" onClick={resetView}><LocateFixed size={15} /><span>範囲に戻す</span></button>}
+      {status !== 'ready' && <p className="map-status" role="status">{status === 'loading' ? '地図を読み込んでいます…' : '地図を読み込めませんでした。下の動画一覧をご利用ください。'}</p>}
+      {tileError && <p className="map-status" role="status">背景地図を取得できません。動画一覧と経路リンクは引き続き使えます。</p>}
+    </div>
+    {expanded && <details className="map-legend"><summary>ピンの見方</summary><div><span><i />検索の中心</span><span><b>1</b>動画と共通の番号</span><span><b>1+</b>同じ地点に複数の動画</span><span><b className="cluster-legend">3</b>近いピンの数・選ぶと拡大</span></div></details>}
+  </>
 }
 
 function groupPins(videos: NearbyVideo[]) {
