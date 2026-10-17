@@ -95,9 +95,19 @@ Workers のサーバースクリプトや Node.js の実行環境は不要。
 
 ### GitHub Release
 
-`v*` のタグを push すると、GitHub Actions が型チェックとビルドを行い、`dist/client` のみをまとめた `yorimichi-drop.zip` を Release に添付する。
+GitHub の **Actions → Build static release → Run workflow** から、リリースを作成できる。
+選択したブランチ / コミットをビルドし、Release とタグを作成する。
+
+- `version` に `1.2.3` または `v1.2.3` を指定すると、`v1.2.3` を作成する。
+- 未指定なら、最新の正式な `vX.Y.Z` タグから patch を 1 つ上げる（例：`v1.2.9` → `v1.2.10`）。
+  正式なタグがまだなければ `v0.0.1` にする。
+- 指定したタグが別のコミットに付いている場合は、上書きせずに終了する。
+
+型チェックとビルドを行い、`dist/client` のみをまとめた `yorimichi-drop.zip` を Release に添付する。
 Release の ZIP をダウンロードして、そのまま Cloudflare Drop にアップロードできる。
 `dist/server` や `node_modules` は ZIP に含めない。
+
+`v*` のタグを push した場合も、そのタグのリリースを作成する。
 
 ```sh
 git tag v0.1.0

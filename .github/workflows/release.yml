@@ -1,6 +1,12 @@
 name: Build static release
 
 on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'バージョン（例: 1.2.3）。未指定なら最新タグの patch を +1'
+        required: false
+        type: string
   push:
     tags:
       - 'v*'
@@ -8,11 +14,52 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Choose release version
+        id: release
+        env:
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          import subprocess
+
+          # 手動実行では指定した版か、最新の正式タグの次の patch を使う。
+          tags = subprocess.check_output(['git', 'tag'], text=True).splitlines()
+          pattern = re.compile(r'v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)')
+          tag = os.environ['GITHUB_REF_NAME']
+          if os.environ['GITHUB_EVENT_NAME'] == 'workflow_dispatch':
+              version = os.environ['REQUESTED_VERSION'].strip().removeprefix('v')
+              if not version:
+                  versions = [tuple(map(int, match.groups())) for name in tags if (match := pattern.fullmatch(name))]
+                  major, minor, patch = max(versions, default=(0, 0, 0))
+                  version = f'{major}.{minor}.{patch + 1}'
+              tag = f'v{version}'
+              if not pattern.fullmatch(tag):
+                  raise SystemExit('version は 1.2.3 または v1.2.3 の形式で指定してください。')
+
+          # 別のコミットに付いた既存タグで、内容を上書きしない。
+          if tag in tags:
+              commit = subprocess.check_output(['git', 'rev-parse', f'{tag}^{{commit}}'], text=True).strip()
+              if commit != os.environ['GITHUB_SHA']:
+                  raise SystemExit(f'{tag} は別のコミットに付いています。新しいバージョンを指定してください。')
+
+          # 決めたタグを、後続の Release 作成・添付で共通に使う。
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write(f'tag={tag}\n')
+          print(f'Release: {tag}')
+          PY
       - uses: actions/setup-node@v5
         with:
           node-version: '22'
@@ -30,7 +77,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
         run: |
-          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 ||
-            gh release create "$GITHUB_REF_NAME" --verify-tag --generate-notes
-          gh release upload "$GITHUB_REF_NAME" dist/yorimichi-drop.zip --clobber
+          gh release view "$RELEASE_TAG" >/dev/null 2>&1 ||
+            gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --generate-notes
+          gh release upload "$RELEASE_TAG" dist/yorimichi-drop.zip --clobber
